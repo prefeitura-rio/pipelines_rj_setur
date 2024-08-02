@@ -21,6 +21,7 @@ from prefeitura_rio.pipelines_templates.run_dbt_model.flows import templates__ru
 
 dbt_setur_seeketing = deepcopy(utils_run_dbt_model_flow)
 dbt_setur_seeketing.name = "SETUR: Seeketing - Materializar tabelas"
+dbt_setur_seeketing.state_handlers = [handler_inject_bd_credentials, handler_initialize_sentry]
 dbt_setur_seeketing.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 dbt_setur_seeketing.run_config = KubernetesRun(image=constants.DOCKER_IMAGE.value)
 
