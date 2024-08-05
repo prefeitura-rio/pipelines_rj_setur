@@ -12,44 +12,65 @@ import pytz
 from pipelines.constants import constants
 from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
+from pipelines_rj_setur.pipelines.observatorio_turismo.dbt.utils import generate_dbt_schedules
+
 #####################################
 #
 # SETUR Seeketing Schedules
 #
 #####################################
 
-setur_seeketing_tables = {
-    "aeroportos": "aeroportos",
-    "pontos_turisticos": "pontos_turisticos",
-    "caged": "caged",
-    "empregos": "empregos",
-    "iss_turistico": "iss_turistico",
-    "museus": "museus",
-    "rede_hoteleira_ocupacao_eventos": "rede_hoteleira_ocupacao_eventos",
-    "rede_hoteleira_ocupacao_geral": "rede_hoteleira_ocupacao_geral",
-    "rodoviarias": "rodoviarias",
+setur_observatorio_turismo_parameters = {
+    "aeroportos": {
+        "dataset_id": "equipamentos",
+    },
+    "rodoviaria": {
+        "dataset_id": "equipamentos",
+    },
+    "museus_visitas": {
+        "dataset_id": "equipamentos",
+    },
+    "rede_hoteleira_ocupacao_geral": {
+        "dataset_id": "equipamentos",
+    },
+    "rede_hoteleira_ocupacao_grandes_eventos": {
+        "dataset_id": "equipamentos",
+        "materialize_to_datario": True,
+    },
+    "pontos_turisticos_visitas": {
+        "dataset_id": "equipamentos",
+    },
+    "pontos_turisticos": {
+        "dataset_id": "dados_mestres",
+    },
+    # "origem_visitacao": {
+    #     "dataset_id": "equipamentos",
+    # },
+    # "atrativos_turistas": {
+    #     "dataset_id": "equipamentos",
+    # },
+    # "atrativos_visitantes": {
+    #     "dataset_id": "equipamentos",
+    # },
+    "caged": {
+        "dataset_id": "receita",
+    },
+    "empregos_turismo": {
+        "dataset_id": "receita",
+    },
+    "iss_turistico": {
+        "dataset_id": "receita",
+    },
 }
 
-setur_seeketing_clocks = [
-    IntervalClock(
-        interval=timedelta(days=1),
-        start_date=datetime(
-            2023, 3, 28, 17, 30, tzinfo=pytz.timezone("America/Sao_Paulo")
-        )
-        + timedelta(minutes=1 * count),
-        labels=[
-            constants.RJ_SETUR_AGENT_LABEL.value,
-        ],
-        parameter_defaults={
-            "dataset_id": "turismo_fluxo_visitantes",
-            "table_id": table_id,
-            "mode": "prod",
-        },
-    )
-    for count, (_, table_id) in enumerate(setur_seeketing_tables.items())
-]
-
-# Add parameter materialize_to_datario as True only for the table rede_hoteleira_ocupacao_eventos
-setur_seeketing_clocks[6].parameter_defaults["materialize_to_datario"] = True
+setur_seeketing_clocks = generate_dbt_schedules(
+    interval=timedelta(days=1),
+    runs_interval_minutes=1,
+    start_date=datetime(2023, 3, 28, 17, 30, tzinfo=pytz.timezone("America/Sao_Paulo")),
+    labels=[
+        constants.RJ_SETUR_AGENT_LABEL.value,
+    ],
+    table_parameters=setur_observatorio_turismo_parameters,
+)
 
 setur_seeketing_daily_update_schedule = Schedule(clocks=untuple(setur_seeketing_clocks))
